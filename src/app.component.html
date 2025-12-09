@@ -1,0 +1,381 @@
+<main class="min-h-screen w-full text-slate-300">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+    <header class="text-center mb-10">
+      <div class="flex justify-center items-center gap-4 mb-4">
+        <button 
+          (click)="setLanguage('zh')" 
+          class="px-3 py-1 text-sm rounded-md transition-colors"
+          [class]="currentLang() === 'zh' ? 'bg-orange-600 text-white' : 'bg-gray-700 hover:bg-gray-600'">
+          {{ translations().lang.zh }}
+        </button>
+        <button 
+          (click)="setLanguage('en')" 
+          class="px-3 py-1 text-sm rounded-md transition-colors"
+          [class]="currentLang() === 'en' ? 'bg-orange-600 text-white' : 'bg-gray-700 hover:bg-gray-600'">
+          {{ translations().lang.en }}
+        </button>
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-100 tracking-tight">
+        <span class="bg-gradient-to-r from-orange-400 to-amber-400 text-transparent bg-clip-text">{{ translations().headerTitle }}</span>
+      </h1>
+      <p class="mt-4 text-lg text-gray-400 max-w-3xl mx-auto">
+        {{ translations().headerSubtitle }}
+      </p>
+    </header>
+
+    @if (!isApiConfigured()) {
+      <div class="max-w-3xl mx-auto bg-red-900/40 border-l-4 border-red-500 text-red-300 p-4 rounded-md" role="alert">
+        <p class="font-bold">{{ translations().errors.configErrorTitle }}</p>
+        <p [innerHTML]="translations().errors.configErrorMessage"></p>
+      </div>
+    }
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Left Column: Input Form -->
+      <div class="bg-slate-800/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-slate-700">
+        <form (submit)="$event.preventDefault(); generateSolution()">
+          <h2 class="text-2xl font-bold mb-5 text-gray-100 border-b border-slate-700 pb-3">{{ translations().form.title }}</h2>
+          
+          <div class="space-y-6">
+            <!-- Business Type -->
+            <div>
+              <label for="business-type" class="block text-sm font-semibold text-gray-300 mb-2">{{ translations().form.businessTypeLabel }}</label>
+              <input 
+                id="business-type"
+                type="text"
+                [value]="businessType()"
+                (input)="updateInput('businessType', $event)"
+                [placeholder]="translations().form.businessTypePlaceholder"
+                class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200 text-gray-200 placeholder:text-gray-500"
+              />
+            </div>
+            
+            <!-- Key Features -->
+            <div>
+              <label for="key-features" class="block text-sm font-semibold text-gray-300 mb-2">{{ translations().form.keyFeaturesLabel }}</label>
+              <textarea 
+                id="key-features"
+                rows="6"
+                [value]="keyFeatures()"
+                (input)="updateInput('keyFeatures', $event)"
+                [placeholder]="translations().form.keyFeaturesPlaceholder"
+                class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200 text-gray-200 placeholder:text-gray-500"
+              ></textarea>
+            </div>
+
+            <!-- Target Users -->
+             <div>
+              <label for="target-users" class="block text-sm font-semibold text-gray-300 mb-2">{{ translations().form.targetUsersLabel }}</label>
+              <input 
+                id="target-users"
+                type="text"
+                [value]="targetUsers()"
+                (input)="updateInput('targetUsers', $event)"
+                [placeholder]="translations().form.targetUsersPlaceholder"
+                class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200 text-gray-200 placeholder:text-gray-500"
+              />
+            </div>
+
+            <!-- Platforms -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-300 mb-2">{{ translations().form.platformsLabel }}</label>
+              <div class="grid grid-cols-3 gap-3">
+                @for (platform of allPlatforms(); track platform.id) {
+                  <button 
+                    type="button" 
+                    (click)="togglePlatform(platform.id)"
+                    class="text-sm text-center p-3 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                    [class]="platforms()[platform.id] 
+                      ? 'bg-orange-600 text-white border-orange-700 shadow-md' 
+                      : 'bg-slate-700 text-gray-300 border-slate-600 hover:bg-slate-600'">
+                    {{ platform.name }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Generate Button -->
+          <button 
+            type="submit"
+            [disabled]="isLoading() || !isApiConfigured()"
+            class="w-full mt-8 flex items-center justify-center gap-3 bg-orange-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-orange-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-slate-600 disabled:cursor-not-allowed">
+            
+            @if (isLoading()) {
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{{ translations().form.generatingButton }}</span>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 glow-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>{{ translations().form.generateButton }}</span>
+            }
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Column: Output -->
+      <div class="bg-slate-800/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-slate-700 relative min-h-[400px] lg:min-h-full">
+        <h2 class="text-2xl font-bold mb-5 text-gray-100 border-b border-slate-700 pb-3">{{ translations().results.title }}</h2>
+        
+        <div class="h-[calc(100%-60px)] overflow-y-auto pr-2">
+            @if (isLoading()) {
+              <!-- Skeleton Loader -->
+              <div class="animate-pulse space-y-6">
+                <div class="h-8 bg-slate-700 rounded w-3/4"></div>
+                <div class="space-y-2">
+                  <div class="h-4 bg-slate-700 rounded w-full"></div>
+                  <div class="h-4 bg-slate-700 rounded w-5/6"></div>
+                </div>
+                <div class="space-y-4 pt-4">
+                  @for (i of [1,2]; track i) {
+                    <div class="p-4 border border-slate-700 rounded-lg space-y-3">
+                      <div class="h-6 bg-slate-700 rounded w-1/2"></div>
+                      <div class="h-4 bg-slate-700 rounded w-full"></div>
+                    </div>
+                  }
+                </div>
+                <div class="h-6 bg-slate-700 rounded w-1/3 mt-4"></div>
+              </div>
+            } @else if (error()) {
+              <div class="flex flex-col items-center justify-center h-full text-center text-red-400 bg-red-900/30 rounded-lg p-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p class="font-semibold">{{ translations().errors.genericErrorTitle }}</p>
+                  <p class="text-sm">{{ error() }}</p>
+              </div>
+            } @else if (solutionResult(); as solution) {
+              <!-- Solution Result -->
+              <div class="space-y-6">
+                <div>
+                  <h3 class="text-2xl font-bold text-white">{{ solution.solutionTitle }}</h3>
+                  <p class="text-gray-400 mt-2">{{ solution.summary }}</p>
+                </div>
+
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-200 mb-3">{{ translations().results.modulesTitle }}</h4>
+                  <div class="space-y-3">
+                    @for (module of solution.keyModules; track module.moduleName) {
+                      <div class="p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                        <h5 class="font-bold text-gray-100">{{ module.moduleName }}</h5>
+                        <p class="text-sm text-gray-400 mt-1">{{ module.description }}</p>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-200 mb-3">{{ translations().results.techStackTitle }}</h4>
+                  <div class="flex flex-wrap gap-3">
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-sky-900/60 text-sky-300 border border-sky-700">
+                        <strong class="mr-2">{{ translations().results.frontend }}:</strong> {{ solution.techStack.frontend }}
+                      </span>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-900/60 text-emerald-300 border border-emerald-700">
+                        <strong class="mr-2">{{ translations().results.backend }}:</strong> {{ solution.techStack.backend }}
+                      </span>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-violet-900/60 text-violet-300 border border-violet-700">
+                        <strong class="mr-2">{{ translations().results.database }}:</strong> {{ solution.techStack.database }}
+                      </span>
+                  </div>
+                </div>
+
+                @if (solution.groundingSources && solution.groundingSources.length > 0) {
+                  <div>
+                    <h4 class="text-lg font-semibold text-gray-200 mb-3">{{ translations().results.sourcesTitle }}</h4>
+                    <ul class="space-y-2">
+                      @for(source of solution.groundingSources; track source.uri) {
+                        <li class="flex items-start gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5"><path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.665l3-3Z" /><path d="M8.603 14.53a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 0 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.665l-3 3Z" /></svg>
+                          <a [href]="source.uri" target="_blank" rel="noopener noreferrer" class="text-sm text-orange-400 hover:text-orange-300 hover:underline truncate" [title]="source.title">
+                            {{ source.title || source.uri }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+
+                 <div>
+                  <h4 class="text-lg font-semibold text-gray-200 mb-3">{{ translations().results.nextStepsTitle }}</h4>
+                  <p class="text-gray-400 border-l-4 border-orange-500 pl-4 py-2">{{ solution.nextSteps }}</p>
+                </div>
+
+                <!-- n8n Workflow Section Trigger -->
+                <div class="pt-6 border-t border-slate-700">
+                   @if (isGeneratingWorkflow()) {
+                    <div class="w-full flex items-center justify-center gap-2 bg-slate-700 text-orange-400 font-semibold py-2 px-4 rounded-lg">
+                      <svg class="animate-spin h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      <span>{{ translations().form.generatingButton }}</span>
+                    </div>
+                  } @else if (workflowError()) {
+                    <div class="text-center text-red-400 bg-red-900/30 rounded-lg p-2">
+                      <p class="text-sm font-semibold">{{ translations().errors.genericErrorTitle }}</p>
+                      <button (click)="generateN8nWorkflow()" class="mt-1 text-sm hover:underline">{{ translations().n8n.retryButton }}</button>
+                    </div>
+                  } @else {
+                    <button (click)="generateN8nWorkflow()" class="w-full flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-orange-400 font-semibold py-2 px-4 rounded-lg transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M3 12.5v-6m4 6v-6m4 6v-6m4 6v-6m-12-3h10a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5Z"></path></svg>
+                      <span>{{ translations().n8n.generateButton }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <!-- Initial State -->
+              <div class="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <p class="font-semibold">{{ translations().results.initialStateTitle }}</p>
+                <p class="text-sm">{{ translations().results.initialStateSubtitle }}</p>
+              </div>
+            }
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Us Section -->
+    <div class="mt-12 text-center bg-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
+      <h2 class="text-3xl font-bold text-white">{{ translations().contact.title }}</h2>
+      <p class="mt-3 max-w-2xl mx-auto text-gray-400">{{ translations().contact.subtitle }}</p>
+      <div class="mt-8 flex justify-center items-center gap-4">
+        <img class="h-16 w-16 rounded-full" src="https://picsum.photos/id/237/200/200" alt="Senior Engineer Avatar">
+        <div>
+          <p class="text-lg font-semibold text-white">{{ translations().contact.engineerName }}</p>
+          <p class="text-orange-400">{{ translations().contact.engineerTitle }}</p>
+        </div>
+      </div>
+      <div class="mt-8">
+        <a href="#" class="inline-block bg-orange-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-orange-700 transition-colors duration-300">
+          {{ translations().contact.buttonText }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Interactive Workflow Canvas -->
+  @if (isWorkflowVisible() && n8nWorkflow(); as workflow) {
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div #canvasContainer class="relative w-full h-full dot-grid rounded-xl shadow-2xl overflow-hidden border border-slate-700"
+          [class.cursor-grabbing]="interactionState().mode === 'panning'"
+          [class.cursor-grab]="interactionState().mode === 'none'"
+          (wheel)="onCanvasWheel($event)"
+          (mousedown)="onCanvasMouseDown($event, canvasContainer)"
+          (mousemove)="onCanvasMouseMove($event, canvasContainer)"
+          (mouseup)="onCanvasMouseUp($event)"
+          (mouseleave)="onCanvasMouseUp($event)">
+        
+        <!-- UI Controls -->
+        <div class="absolute top-4 left-4 z-20 flex flex-col items-start gap-2">
+          <button (click)="closeWorkflowView()" class="flex items-center gap-2 bg-slate-800 text-white hover:bg-slate-700 px-3 py-2 rounded-md text-sm transition-colors border border-slate-600 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>
+            {{ translations().workflowView.exit }}
+          </button>
+          <div class="flex flex-col gap-1 bg-slate-800 p-1 rounded-md border border-slate-600 shadow-lg">
+            <button (click)="zoom(1.25)" [title]="translations().workflowView.zoomIn" class="p-2 hover:bg-slate-700 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM.75 10a9.25 9.25 0 1 0 18.5 0 9.25 9.25 0 0 0-18.5 0ZM10 6a.75.75 0 0 1 .75.75v2.5h2.5a.75.75 0 0 1 0 1.5h-2.5v2.5a.75.75 0 0 1-1.5 0v-2.5h-2.5a.75.75 0 0 1 0-1.5h2.5v-2.5A.75.75 0 0 1 10 6Z" clip-rule="evenodd" /></svg></button>
+            <button (click)="zoom(0.8)" [title]="translations().workflowView.zoomOut" class="p-2 hover:bg-slate-700 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM.75 10a9.25 9.25 0 1 0 18.5 0 9.25 9.25 0 0 0-18.5 0ZM6 10a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 6 10Z" clip-rule="evenodd" /></svg></button>
+            <button (click)="resetView()" [title]="translations().workflowView.reset" class="p-2 hover:bg-slate-700 rounded-md transition-colors"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10 4.5a.75.75 0 0 1 .75.75v2.515l3.53 2.038a.75.75 0 0 1-.75 1.299l-4-2.309A.75.75 0 0 1 9.25 8V5.25A.75.75 0 0 1 10 4.5Z" /><path fill-rule="evenodd" d="M5.05 3.55a.75.75 0 0 1 0 1.06l-1.47 1.47a.75.75 0 1 1-1.06-1.06l1.47-1.47a.75.75 0 0 1 1.06 0Zm10.96-.02a.75.75 0 0 1 1.06 0l1.47 1.47a.75.75 0 1 1-1.06 1.06L16.03 4.59a.75.75 0 0 1 0-1.06ZM18 10a.75.75 0 0 1-.75.75h-2.19l-1.98 3.43a.75.75 0 1 1-1.3-.75l2.64-4.57A.75.75 0 0 1 15.03 8.5H17.5a.75.75 0 0 1 .75.75Zm-3.97 4.59a.75.75 0 0 1 1.06 0l1.47 1.47a.75.75 0 1 1-1.06 1.06l-1.47-1.47a.75.75 0 0 1 0-1.06ZM5.05 16.45a.75.75 0 0 1 0-1.06l-1.47-1.47a.75.75 0 0 1-1.06 1.06l1.47 1.47a.75.75 0 0 1 1.06 0ZM2 10a.75.75 0 0 1 .75-.75h2.19l1.98-3.43a.75.75 0 1 1 1.3.75L5.58 11.5h-.08a.75.75 0 0 1-.75-.75H2.5a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" /></svg></button>
+          </div>
+        </div>
+        
+        <!-- Canvas Content -->
+        <div class="absolute inset-0" [style.transform]="canvasTransform()" style="transform-origin: 0 0;">
+          <!-- Connectors SVG Layer -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none" style="overflow: visible;">
+            @for(path of connections(); track path) {
+              <path [attr.d]="path" stroke="#475569" stroke-width="2" fill="none" />
+            }
+            @if(connectionPreviewPath(); as path) {
+              <path [attr.d]="path" stroke="#f97316" stroke-width="2" fill="none" stroke-dasharray="6 4" />
+            }
+          </svg>
+
+          <!-- Nodes -->
+          @for (node of workflow.nodes; track node.id; let isFirst = $first) {
+            <div 
+              class="absolute group w-72 h-36 p-3 rounded-lg border-2 bg-slate-800 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] cursor-default"
+              [style.transform]="'translate(' + node.position.x + 'px, ' + node.position.y + 'px)'"
+              [class]="node.error ? 'border-red-500' : (isFirst ? 'border-purple-500' : 'border-cyan-500')"
+              [attr.data-node-id]="node.id"
+              (dblclick)="startNodeEdit(node)">
+
+              <!-- Input Port -->
+              <div class="port-input absolute top-1/2 -left-[10px] -translate-y-1/2 w-4 h-4 bg-slate-700 border-2 border-gray-400 rounded-full hover:bg-orange-500 hover:border-orange-300 transition-colors"></div>
+              
+              <!-- Output Port -->
+              <div class="port-output absolute top-1/2 -right-[10px] -translate-y-1/2 w-4 h-4 bg-slate-700 border-2 border-gray-400 rounded-full cursor-pointer hover:bg-orange-500 hover:border-orange-300 transition-colors"></div>
+              
+              <!-- Node Body -->
+              <div class="node-body cursor-move w-full h-full">
+                @if(isFirst && !node.error) { <div class="absolute -top-px -left-px w-10 h-10 bg-purple-500" style="clip-path: polygon(0 0, 100% 0, 0 100%);"></div> }
+                
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md" 
+                    [class]="node.error ? 'bg-red-500/20' : (isFirst ? 'bg-purple-500/20' : 'bg-cyan-500/20')">
+                    
+                    @if(node.error) {
+                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-red-400"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                    } @else if (isFirst) { 
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-purple-400"><path fill-rule="evenodd" d="M4 2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.586a1 1 0 0 0-.293-.707l-4.586-4.586A1 1 0 0 0 11.414 3H4Zm6 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm3 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg> 
+                    } @else { 
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-cyan-400"><path fill-rule="evenodd" d="M11.49 3.17a.75.75 0 0 1 1.02.625l.073 1.036a8.25 8.25 0 0 1 1.028.532.75.75 0 1 1-.585 1.258 6.75 6.75 0 0 0-.839-.434l-.073-1.036a.75.75 0 0 1 .625-1.02ZM9.12 4.385a.75.75 0 1 1-1.258-.585 8.25 8.25 0 0 1 1.028-.532l1.036.073a.75.75 0 0 1 .625 1.02l-1.036-.073a6.75 6.75 0 0 0-.434.839Zm-2.66 1.42a.75.75 0 1 1-.585-1.258 8.25 8.25 0 0 1 .532-1.028l1.036.073a.75.75 0 1 1-1.02.625l-1.036-.073a6.75 6.75 0 0 0-.839.434Zm10.126 8.216a.75.75 0 1 1 1.258.585 8.25 8.25 0 0 1-.532 1.028l-1.036-.073a.75.75 0 1 1 1.02-.625l1.036.073a6.75 6.75 0 0 0 .434-.839ZM3.33 6.39a.75.75 0 1 1-1.258.585 8.25 8.25 0 0 1-.532-1.028l.073-1.036a.75.75 0 1 1 1.02-.625l-.073 1.036c.14.26.3.51.468.752Zm-.585 5.86a.75.75 0 1 1-1.258-.585A8.25 8.25 0 0 1 3.25 11l.073 1.036a.75.75 0 1 1-1.02.625L2.23 11.62a6.75 6.75 0 0 0-.434-.839Zm1.42 2.66a.75.75 0 1 1-.585 1.258 8.25 8.25 0 0 1-1.028-.532l-.073 1.036a.75.75 0 1 1-.625-1.02l.073-1.036a6.75 6.75 0 0 0 .839-.434Zm8.216-10.126a.75.75 0 1 1 .585-1.258 8.25 8.25 0 0 1 1.028.532l-.073 1.036a.75.75 0 1 1-1.02.625l.073-1.036a6.75 6.75 0 0 0-.839.434ZM10 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-1.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" clip-rule="evenodd" /></svg> 
+                    }
+                  </div>
+                  <h5 class="font-bold text-gray-100 truncate pt-1">{{ node.name }}</h5>
+                </div>
+                
+                <p class="text-xs text-gray-400 mt-2 h-12 overflow-hidden">{{ node.description }}</p>
+                <div class="absolute bottom-3 left-3"> <span class="text-xs font-mono text-gray-400">{{ node.type }}</span> </div>
+
+                @if(node.error; as errorMsg) {
+                  <div class="absolute top-2 right-2 group/error">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-red-400"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                     <div class="absolute bottom-full right-0 mb-2 w-64 p-2 bg-slate-900 border border-slate-700 rounded-md shadow-lg text-xs text-red-300 opacity-0 group-hover/error:opacity-100 transition-opacity pointer-events-none">
+                       <p class="font-bold mb-1">{{ translations().n8n.errorTitle }}</p>
+                       {{ errorMsg }}
+                     </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Node Edit Modal -->
+  @if(editingNode(); as node) {
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <h3 class="text-xl font-bold text-white mb-4">{{ translations().editNode.title }}</h3>
+        <div class="space-y-4">
+          <div>
+            <label for="node-name" class="block text-sm font-semibold text-gray-300 mb-1">{{ translations().editNode.nameLabel }}</label>
+            <input id="node-name" type="text" [(ngModel)]="node.name" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md text-gray-200">
+          </div>
+           <div>
+            <label for="node-type" class="block text-sm font-semibold text-gray-300 mb-1">{{ translations().editNode.typeLabel }}</label>
+            <input id="node-type" type="text" [(ngModel)]="node.type" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md text-gray-200">
+          </div>
+          <div>
+            <label for="node-desc" class="block text-sm font-semibold text-gray-300 mb-1">{{ translations().editNode.descriptionLabel }}</label>
+            <textarea id="node-desc" rows="4" [(ngModel)]="node.description" class="w-full p-2 bg-slate-700 border border-slate-600 rounded-md text-gray-200"></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button (click)="cancelNodeEdit()" class="px-4 py-2 text-sm font-semibold bg-slate-600 hover:bg-slate-500 rounded-md transition-colors">{{ translations().editNode.cancelButton }}</button>
+          <button (click)="saveNodeEdit()" class="px-4 py-2 text-sm font-semibold bg-orange-600 hover:bg-orange-700 text-white rounded-md transition-colors">{{ translations().editNode.saveButton }}</button>
+        </div>
+      </div>
+    </div>
+  }
+</main>
